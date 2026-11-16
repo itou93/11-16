@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>机の上で3Dキャラと遊ぼう！</title>
+
+    <!-- Google model-viewer 読み込み -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
+    <style>
+        html, body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh; height: 100dvh;
+            overflow: hidden;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+        }
+
+        /* 戻るボタン */
+        .btn-back {
+            position: fixed; top: 20px; left: 20px; z-index: 100;
+            background-color: rgba(0, 0, 0, 0.65); color: #ffffff;
+            padding: 10px 18px; border-radius: 20px; text-decoration: none;
+            font-weight: bold; font-size: 15px; border: 2px solid #ffffff;
+        }
+
+        /* キャラ切り替えボタン（右上） */
+        .char-selector {
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            display: flex; gap: 6px; background: rgba(255, 255, 255, 0.9);
+            padding: 6px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .char-btn {
+            background: transparent; color: #334155; border: none;
+            padding: 7px 11px; border-radius: 14px; font-weight: bold;
+            font-size: 13px; cursor: pointer;
+        }
+        .char-btn.active {
+            background: #2563eb; color: #ffffff;
+        }
+
+        /* 3Dモデル表示エリア */
+        model-viewer {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            --poster-color: transparent;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* タップしたときに跳ねるアニメーション */
+        @keyframes charJump {
+            0%   { transform: translateY(0) scale(1, 1); }
+            30%  { transform: translateY(-45px) scale(0.95, 1.08); }
+            60%  { transform: translateY(0) scale(1.06, 0.92); }
+            80%  { transform: translateY(-12px) scale(0.98, 1.02); }
+            100% { transform: translateY(0) scale(1, 1); }
+        }
+        .is-jumping {
+            animation: charJump 0.55s ease-out;
+        }
+
+        /* セリフ吹き出し */
+        #speech-bubble {
+            position: fixed; top: 14%; left: 50%; transform: translateX(-50%);
+            background: #ffffff; color: #1e293b;
+            padding: 12px 22px; border-radius: 24px;
+            font-weight: bold; font-size: 16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            border: 2px solid #3b82f6;
+            z-index: 90; opacity: 0; pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            white-space: nowrap;
+        }
+        #speech-bubble.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-6px);
+        }
+
+        /* AR起動ボタン（机の上に置く） */
+        .ar-launch-btn {
+            position: fixed; bottom: 95px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; border: none; border-radius: 30px;
+            padding: 14px 28px; font-size: 16px; font-weight: bold;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            cursor: pointer; z-index: 100;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* 下部ガイドバー */
+        .guide-bar {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            width: 88%; max-width: 360px;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 12px 16px; border-radius: 18px;
+            text-align: center; font-size: 13px; color: #475569;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 90;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="videoMaya.html" class="btn-back">← 戻る</a>
+
+    <!-- 5学科のキャラクター切り替え -->
+    <div class="char-selector">
+        <button class="char-btn" onclick="selectChar('1f', this)">1F</button>
+        <button class="char-btn" onclick="selectChar('2f', this)">2F</button>
+        <button class="char-btn" onclick="selectChar('3f', this)">3F</button>
+        <button class="char-btn active" onclick="selectChar('4f', this)">4F</button>
+        <button class="char-btn" onclick="selectChar('5f', this)">5F</button>
+    </div>
+
+    <!-- タップ時のセリフ吹き出し -->
+    <div id="speech-bubble">こんにちは！</div>
+
+    <!-- 3Dモデル＆平面ARビューア -->
+    <model-viewer
+        id="char-viewer"
+        src="maya/zyougi.glb"
+        alt="学科キャラクター"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-placement="floor"
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        touch-action="pan-y">
+
+        <!-- 平面AR起動用カスタムボタン -->
+        <button slot="ar-button" class="ar-launch-btn">
+            📷 机の上に置いてみる（AR）
+        </button>
+    </model-viewer>
+
+    <div class="guide-bar">
+        👆 <b>キャラをタップ</b>すると跳ねるよ！<br>
+        指でなぞると回転、下のボタンで机の上に出せるよ
+    </div>
+
+<script>
+    // キャラクターデータとタップ時のセリフリスト
+    const charData = {
+        '1f': {
+            model: 'maya/kougyo2.glb',
+            lines: ['電子機械科へようこそ！', 'ロボットやものづくりが学べるよ！', 'ピョコン！']
+        },
+        '2f': {
+            model: 'maya/syokutyou.glb',
+            lines: ['食物調理科だよ！', '本格的な料理とお菓子が作れるよ！', 'おいしくな〜れ！']
+        },
+        '3f': {
+            model: 'maya/fukude3.glb',
+            lines: ['服飾デザイン科へようこそ！', '衣装制作やファッションショーがあるよ！', 'くるっ♪']
+        },
+        '4f': {
+            model: 'maya/zyougi.glb',
+            lines: ['情報技術科だよ！', 'このARアプリもプログラミングで作ったよ！', 'ナイスぷっしゅ！']
+        },
+        '5f': {
+            model: 'maya/syougyou3.glb',
+            lines: ['情報処理・流通経済科だよ！', 'ビジネスやパソコンスキルが身につくよ！', 'いらっしゃいませ！']
+        }
+    };
+
+    const viewer = document.getElementById('char-viewer');
+    const bubble = document.getElementById('speech-bubble');
+    let currentKey = '4f';
+    let bubbleTimer = null;
+
+    // キャラクター切り替え
+    function selectChar(floorKey, btnEl) {
+        currentKey = floorKey;
+        viewer.src = charData[floorKey].model;
+
+        document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+
+        showSpeech(charData[floorKey].lines[0]);
+    }
+
+    // 吹き出し表示
+    function showSpeech(text) {
+        bubble.textContent = text;
+        bubble.classList.add('show');
+        clearTimeout(bubbleTimer);
+        bubbleTimer = setTimeout(() => {
+            bubble.classList.remove('show');
+        }, 2200);
+    }
+
+    // キャラをタップ・クリックしたときのアクション（跳ねる＋回転加速＋セリフ）
+    viewer.addEventListener('click', () => {
+        // ジャンプアニメーションをリセットして再実行
+        viewer.classList.remove('is-jumping');
+        void viewer.offsetWidth; // 再描画トリガー
+        viewer.classList.add('is-jumping');
+
+        // ランダムにセリフを表示
+        const lines = charData[currentKey].lines;
+        const randomLine = lines[Math.floor(Math.random() * lines.length)];
+        showSpeech(randomLine);
+    });
+</script>
+</body>
+</html>

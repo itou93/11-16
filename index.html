@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="Shift_JIS">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>越総 ARナビ - スタート</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 全体のベーススタイル */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px 16px;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* 余白を埋める浮遊背景パーツ */
+        .bg-decorations {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .decor-item {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.5);
+            animation: float 6s ease-in-out infinite alternate;
+        }
+
+        .item-kougyou1 { top: 8%; left: 8%; animation-delay: 0s; font-size: 52px; }
+        .item-kougyou2 { bottom: 12%; right: 10%; animation-delay: 2s; font-size: 46px; }
+        .item-shougyou1 { top: 12%; right: 8%; animation-delay: 1s; font-size: 48px; }
+        .item-shougyou2 { bottom: 25%; left: 6%; animation-delay: 3s; font-size: 42px; }
+        .item-fukushoku1 { top: 48%; left: 4%; animation-delay: 1.5s; font-size: 48px; }
+        .item-fukushoku2 { bottom: 8%; right: 28%; animation-delay: 0.5s; font-size: 40px; }
+        .item-shokumotsu1 { top: 52%; right: 5%; animation-delay: 2.5s; font-size: 52px; }
+        .item-shokumotsu2 { top: 10%; left: 28%; animation-delay: 1.8s; font-size: 42px; }
+        .item-ar1 { bottom: 10%; left: 22%; animation-delay: 0.8s; font-size: 48px; }
+        .item-ar2 { top: 6%; right: 26%; animation-delay: 2.2s; font-size: 40px; }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-22px) rotate(12deg); }
+        }
+
+        /* メインのカード型容器 */
+        .app-card {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.93);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 36px 24px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .app-badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 6px 16px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+
+        /* タイトルロゴ画像のスタイル */
+        .logo-container {
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .title-logo {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            display: block;
+        }
+
+        /* スタートボタン */
+        .btn-start {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 18px 24px;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 20px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            margin-bottom: 24px;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-start:active {
+            transform: scale(0.98);
+        }
+
+        /* スタートボタンの下に配置する説明文エリア */
+        .description-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 18px 20px;
+            text-align: left;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.7;
+        }
+
+        .description-box h3 {
+            color: #0f172a;
+            font-size: 15px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景の浮遊アイコン -->
+    <div class="bg-decorations">
+        <i class="fa-solid fa-gear decor-item item-kougyou1"></i>
+        <i class="fa-solid fa-screwdriver-wrench decor-item item-kougyou2"></i>
+        <i class="fa-solid fa-calculator decor-item item-shougyou1"></i>
+        <i class="fa-solid fa-chart-line decor-item item-shougyou2"></i>
+        <i class="fa-solid fa-scissors decor-item item-fukushoku1"></i>
+        <i class="fa-solid fa-shirt decor-item item-fukushoku2"></i>
+        <i class="fa-solid fa-utensils decor-item item-shokumotsu1"></i>
+        <i class="fa-solid fa-cake-candles decor-item item-shokumotsu2"></i>
+        <i class="fa-solid fa-vr-cardboard decor-item item-ar1"></i>
+        <i class="fa-solid fa-graduation-cap decor-item item-ar2"></i>
+    </div>
+    
+    <!-- メインカード -->
+    <div class="app-card">
+        <span class="app-badge">越谷総合技術高校</span>
+
+        <!-- 2枚目のタイトルロゴ -->
+        <div class="logo-container">
+            <img src="タイトルロゴ大.png" alt="AR コシソウGO" class="title-logo">
+        </div>
+
+        <!-- スタートボタン -->
+        <a href="./menu.html" class="btn-start">
+            <i class="fa-solid fa-play"></i>
+            スタート
+        </a>
+
+        <!-- 説明文を書き込むエリア -->
+        <div class="description-box">
+            <h3><i class="fa-solid fa-circle-info" style="color: #3b82f6;"></i> このアプリについて</h3>
+            <p>
+                ARを使った新しい校内案内アプリです！（仮　AR体験の説明を１行くらいで）<br>
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

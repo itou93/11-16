@@ -178,14 +178,21 @@
 
     // キャラクター切り替え
     function selectChar(floorKey, btnEl) {
-        currentKey = floorKey;
-        viewer.src = charData[floorKey].model;
+    currentKey = floorKey;
+    viewer.src = charData[floorKey].model;
 
-        document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
-        if (btnEl) btnEl.classList.add('active');
-
-        showSpeech(charData[floorKey].lines[0]);
+    // 5fだけサイズを小さくする（他は元の大きさ）
+    if (floorKey === '5f') {
+        viewer.setAttribute('scale', '0.1 0.1 0.1');
+    } else {
+        viewer.setAttribute('scale', '1 1 1');
     }
+
+    document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    showSpeech(charData[floorKey].lines[0]);
+}
 
     // 吹き出し表示
     function showSpeech(text) {

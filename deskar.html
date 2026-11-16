@@ -47,6 +47,8 @@
             height: 100dvh;
             --poster-color: transparent;
             transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+        
         }
 
         /* タップしたときに跳ねるアニメーション */
@@ -126,6 +128,10 @@
         ar-placement="floor"
         camera-controls
         auto-rotate
+        disable-zoom
+        min-camera-orbit="auto 75deg auto"
+        max-camera-orbit="auto 75deg auto"
+        orbit-sensitivity="1.5"
         shadow-intensity="1"
         touch-action="pan-y">
 

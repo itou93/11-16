@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.js"></script>
 
     <link rel="stylesheet" href="Style.css">
-    <script src="Script.js?v=9"></script>
+    <script src="Script.js?v=11"></script>
 
     <style>
         /* 画面下部の柔らかいログパネル */
@@ -78,21 +78,21 @@
             position: fixed !important;
             top: 84px !important;
             right: 20px !important;
-            width: 155px !important;
-            height: 48px !important;
+            width: 158px !important;
+            height: 52px !important;
             box-sizing: border-box !important;
-            z-index: 999999 !important;
-            display: flex !important;
+            z-index: 2147483647 !important;
+            display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             background-color: #2563eb !important;
             color: #ffffff !important;
-            border-radius: 25px !important;
+            border-radius: 20px !important;
             text-decoration: none !important;
             font-weight: bold !important;
-            font-size: 16px !important;
-            border: 3px solid #ffffff !important;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+            font-size: 20px !important;
+            border: 2px solid #ffffff !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
             white-space: nowrap !important;
         }
     </style>
@@ -103,20 +103,8 @@
     <button type="button" class="btn-back" onclick="goBack()">← 戻る</button>
     <button type="button" class="btn-collection" onclick="openCollection()">🎬 解放動画</button>
 
-    <!-- ARシーン（ログおよび認識判定用：pattフォルダを参照） -->
-    <a-scene 
-        embedded 
-        arjs="sourceType: webcam; debugUIEnabled: false; patternRatio: 0.7; trackingMethod: best;" 
-        vr-mode-ui="enabled: false">
-    
-        <a-entity light="type: ambient; color: #ffffff; intensity: 1.8;"></a-entity>
-
-        <a-marker type="pattern" url="./patt/pattern-koshou.patt" patternRatio="0.7" id="ar-marker-1"></a-marker>
-        <a-marker type="pattern" url="./patt/pattern-JGmaeker.patt" patternRatio="0.7" id="ar-marker-2"></a-marker>
-        <a-marker type="pattern" url="./patt/pattern-j.patt" patternRatio="0.7" id="ar-marker-3"></a-marker>
-
-        <a-entity camera></a-entity>
-    </a-scene>
+    <!-- 「Next ➔」を押したときにここにARカメラが生成される -->
+    <div id="ar-container"></div>
 
     <!-- 来場者向け案内ログ・移動パネル -->
     <div id="soft-log-panel">

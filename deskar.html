@@ -32,7 +32,7 @@
             z-index: 2;
         }
 
-        /* 戻るボタン */
+        /* 戻るボタン（スタート画面より手前に常時表示） */
         .btn-back {
             position: fixed; top: 20px; left: 20px; z-index: 300;
             background-color: rgba(0, 0, 0, 0.7); color: #ffffff;
@@ -43,7 +43,7 @@
         /* キャラ切り替えボタン（右上） */
         .char-selector {
             position: fixed; top: 20px; right: 20px; z-index: 100;
-            display: flex; gap: 6px; background: rgba(255, 255, 255, 0.9);
+            display: flex; gap: 6px; background: rgba(255, 255, 255, 0.92);
             padding: 6px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         .char-btn {
@@ -72,7 +72,7 @@
             transform: translateX(-50%) translateY(-6px);
         }
 
-        /* ARスタート画面（カメラ＆ジャイロ許可を1タップで取る用） */
+        /* ARスタート画面 */
         #start-overlay {
             position: fixed; top: 0; left: 0;
             width: 100vw; height: 100vh; height: 100dvh;
@@ -91,23 +91,64 @@
             cursor: pointer; margin-top: 20px;
         }
 
-        /* 視点リセットボタン */
+        /* 下部コントロール（正面リセット ＆ シャッターボタン） */
+        .bottom-controls {
+            position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 16px; z-index: 100;
+        }
         .reset-btn {
-            position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.75); color: white;
-            border: 1.5px solid rgba(255,255,255,0.7); border-radius: 20px;
-            padding: 8px 18px; font-size: 13px; font-weight: bold;
-            cursor: pointer; z-index: 100;
+            background: rgba(15, 23, 42, 0.78); color: white;
+            border: 1.5px solid rgba(255,255,255,0.8); border-radius: 22px;
+            padding: 10px 16px; font-size: 13px; font-weight: bold;
+            cursor: pointer;
+        }
+        .shutter-btn {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: #ffffff; border: 4px solid #3b82f6;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+            font-size: 26px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
+        }
+        .shutter-btn:active {
+            transform: scale(0.9);
         }
 
         /* 下部ガイドバー */
         .guide-bar {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
             width: 88%; max-width: 360px;
             background: rgba(255, 255, 255, 0.92);
-            padding: 10px 16px; border-radius: 18px;
+            padding: 9px 14px; border-radius: 18px;
             text-align: center; font-size: 12px; color: #475569;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 90;
+        }
+
+        /* シャッター時のフラッシュ演出 */
+        #flash-effect {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #ffffff; opacity: 0; pointer-events: none;
+            z-index: 400; transition: opacity 0.25s ease-out;
+        }
+
+        /* 撮影した写真のプレビューモーダル */
+        #photo-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+            z-index: 500; display: none; flex-direction: column;
+            align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+        }
+        #photo-preview-img {
+            max-width: 85%; max-height: 62vh;
+            border-radius: 16px; border: 4px solid #ffffff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .modal-actions {
+            display: flex; gap: 12px; margin-top: 18px; width: 85%; max-width: 320px;
+        }
+        .modal-btn {
+            flex: 1; padding: 12px; border: none; border-radius: 14px;
+            font-weight: bold; font-size: 14px; cursor: pointer; text-align: center; text-decoration: none;
         }
     </style>
 </head>
@@ -116,12 +157,15 @@
     <!-- カメラ映像背景 -->
     <video id="camera-bg" autoplay playsinline muted></video>
 
-    <!-- スタートオーバーレイ（カメラとジャイロを同時に有効化） -->
+    <!-- シャッターフラッシュ用 -->
+    <div id="flash-effect"></div>
+
+    <!-- スタートオーバーレイ -->
     <div id="start-overlay">
         <div style="font-size: 48px; margin-bottom: 10px;">📱✨</div>
         <h2 style="margin: 0 0 10px; font-size: 22px;">ARキャラクター召喚！</h2>
         <p style="margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.6;">
-            カメラを机や目の前に向けて、<br>3Dキャラクターと遊んでみよう！
+            カメラを机や目の前に向けて、<br>3Dキャラクターと遊んで写真を撮ろう！
         </p>
         <button class="start-btn" onclick="initARExperience()">📷 ARをスタートする</button>
     </div>
@@ -140,27 +184,26 @@
     <!-- タップ時のセリフ吹き出し -->
     <div id="speech-bubble">こんにちは！</div>
 
-    <!-- A-Frame 3D空間 -->
+    <!-- A-Frame 3D空間（preserveDrawingBuffer: true で記念撮影に対応） -->
     <a-scene
         id="ar-scene"
         embedded
-        renderer="alpha: true; colorManagement: true; antialias: true;"
+        renderer="alpha: true; colorManagement: true; antialias: true; preserveDrawingBuffer: true;"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false">
 
-        <!-- ジャイロ（スマホの傾き）で空間を見回せるカメラ -->
         <a-entity id="camera-rig" position="0 0 0">
             <a-camera id="main-camera" position="0 1.2 3.2" look-controls="enabled: true; touchEnabled: false; magicWindowTrackingEnabled: true;"></a-camera>
         </a-entity>
 
-        <!-- 立体感を出すライティング（環境光＋上から斜めの太陽光） -->
+        <!-- 立体感を出すライティング -->
         <a-entity light="type: ambient; color: #ffffff; intensity: 1.5;"></a-entity>
         <a-entity light="type: directional; color: #ffffff; intensity: 1.4;" position="2 4 3"></a-entity>
         <a-entity light="type: directional; color: #bfdbfe; intensity: 0.6;" position="-2 1 -2"></a-entity>
 
-        <!-- 3Dキャラクター親グループ（位置・回転・スケール管理用） -->
+        <!-- 3Dキャラクター親グループ -->
         <a-entity id="char-root" position="0 0.2 0" rotation="0 0 0">
-            <!-- キャラクター本体（待機モーション付き） -->
+            <!-- キャラクター本体 -->
             <a-entity
                 id="char-entity"
                 gltf-model="maya/zyougi.glb"
@@ -169,7 +212,10 @@
                 animation__float="property: position; from: 0 0.2 0; to: 0 0.32 0; dir: alternate; dur: 1400; loop: true; easing: easeInOutSine">
             </a-entity>
 
-            <!-- 足元の立体感を作る落ち影（これがあるだけで2D感が消える） -->
+            <!-- キラキラパーティクル生成用コンテナ -->
+            <a-entity id="sparkle-container" position="0 0.5 0"></a-entity>
+
+            <!-- 足元の落ち影 -->
             <a-circle
                 position="0 -0.15 0"
                 rotation="-90 0 0"
@@ -179,12 +225,26 @@
         </a-entity>
     </a-scene>
 
-    <!-- キャラが視界から外れたときに正面に戻すボタン -->
-    <button class="reset-btn" onclick="recenterCharacter()">🎯 正面に呼び戻す</button>
+    <!-- 正面に呼び戻す ＆ シャッターボタン -->
+    <div class="bottom-controls">
+        <button class="reset-btn" onclick="recenterCharacter()">🎯 正面に呼ぶ</button>
+        <button class="shutter-btn" onclick="takeARPhoto()" title="記念撮影">📸</button>
+    </div>
 
     <div class="guide-bar">
-        👆 <b>画面タップ</b>でジャンプ＆おしゃべり！<br>
-        スマホを傾けて立体的に見よう（指で回転・拡大もOK）
+        👆 <b>画面タップ</b>でジャンプ＆キラキラ！<br>
+        📸 ボタンでキャラと一緒に記念撮影できるよ
+    </div>
+
+    <!-- 撮影した写真のプレビューモーダル -->
+    <div id="photo-modal">
+        <p style="color: #ffffff; font-weight: bold; font-size: 16px; margin: 0 0 12px;">✨ 記念写真が撮れました！</p>
+        <img id="photo-preview-img" src="" alt="AR記念写真">
+        <p style="color: #cbd5e1; font-size: 12px; margin: 10px 0 0;">※画像を長押ししても保存できます</p>
+        <div class="modal-actions">
+            <button class="modal-btn" style="background: #64748b; color: white;" onclick="closePhotoModal()">閉じる</button>
+            <a id="photo-download-link" class="modal-btn" style="background: #10b981; color: white;" download="ar_memory.png">💾 保存する</a>
+        </div>
     </div>
 
 <script>
@@ -192,32 +252,38 @@
         '1f': {
             model: 'maya/kougyo2.glb',
             scale: 0.16,
+            title: '1F 電子機械科',
             lines: ['電子機械科へようこそ！', 'ロボットやものづくりが学べるよ！', 'ピョコン！']
         },
         '2f': {
             model: 'maya/syokutyou.glb',
             scale: 1.2,
+            title: '2F 食物調理科',
             lines: ['食物調理科だよ！', '本格的な料理とお菓子が作れるよ！', 'おいしくな〜れ！']
         },
         '3f': {
             model: 'maya/fukude3.glb',
             scale: 1.2,
+            title: '3F 服飾デザイン科',
             lines: ['服飾デザイン科へようこそ！', '衣装制作やファッションショーがあるよ！', 'くるっ♪']
         },
         '4f': {
             model: 'maya/zyougi.glb',
             scale: 0.16,
+            title: '4F 情報技術科',
             lines: ['情報技術科だよ！', 'このARアプリもプログラミングで作ったよ！', 'ナイスぷっしゅ！']
         },
         '5f': {
             model: 'maya/syougyou3.glb',
             scale: 0.16,
+            title: '5F 情報処理・流通経済科',
             lines: ['情報処理・流通経済科だよ！', 'ビジネスやパソコンスキルが身につくよ！', 'いらっしゃいませ！']
         }
     };
 
     const charRoot = document.getElementById('char-root');
     const charEntity = document.getElementById('char-entity');
+    const sparkleContainer = document.getElementById('sparkle-container');
     const mainCamera = document.getElementById('main-camera');
     const bubble = document.getElementById('speech-bubble');
 
@@ -225,23 +291,69 @@
     let currentScale = charData['4f'].scale;
     let currentRotY = 0;
     let bubbleTimer = null;
-    let isJumping = false;
+    let isReacting = false;
+    let audioCtx = null;
 
-    // カメラ起動 ＆ iPhoneジャイロセンサー許可を同時に取得
+    // 効果音（ピコン♪ / シャッター音）をWeb Audio APIで生成
+    function playTapSound() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            // 2段階に上がる可愛い音（ピコン♪）
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+            osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.08); // A5
+
+            gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.28);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.28);
+        } catch (e) {}
+    }
+
+    function playShutterSound() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.12);
+
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.12);
+        } catch (e) {}
+    }
+
+    // カメラ起動 ＆ iPhoneジャイロセンサー許可
     async function initARExperience() {
         const video = document.getElementById('camera-bg');
         const overlay = document.getElementById('start-overlay');
 
-        // 1. iOS (iPhone/iPad) のジャイロセンサー許可リクエスト
+        // 音声コンテキストの初期化（ユーザー操作のタイミングでアンロック）
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
+
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             try {
                 await DeviceOrientationEvent.requestPermission();
-            } catch (e) {
-                console.warn('ジャイロ許可スキップ:', e);
-            }
+            } catch (e) {}
         }
 
-        // 2. 背面カメラ起動
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'environment' },
@@ -261,7 +373,6 @@
         const camObj = mainCamera.object3D;
         if (!camObj) return;
 
-        // カメラが向いている水平方向（Y軸回転）を取得
         const euler = new THREE.Euler().setFromQuaternion(camObj.quaternion, 'YXZ');
         const yaw = euler.y;
         const distance = 3.2;
@@ -270,7 +381,6 @@
         const targetZ = camObj.position.z - Math.cos(yaw) * distance;
 
         charRoot.setAttribute('position', `${targetX} 0.2 ${targetZ}`);
-        // キャラがカメラの方を向くように角度を調整
         currentRotY = THREE.MathUtils.radToDeg(yaw);
         charRoot.setAttribute('rotation', `0 ${currentRotY} 0`);
     }
@@ -287,6 +397,8 @@
         document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
         if (btnEl) btnEl.classList.add('active');
 
+        spawnSparkles();
+        playTapSound();
         showSpeech(data.lines[0]);
     }
 
@@ -300,27 +412,89 @@
         }, 2400);
     }
 
-    // ジャンプアニメーション
-    function jumpCharacter() {
-        if (isJumping) return;
-        isJumping = true;
+    // キラキラパーティクルを放射状に弾けさせる演出
+    function spawnSparkles() {
+        const colors = ['#facc15', '#38bdf8', '#f472b6', '#4ade80', '#fb923c'];
+        const count = 8;
 
-        // 待機アニメーションを一時停止してジャンプ
+        for (let i = 0; i < count; i++) {
+            const star = document.createElement('a-octahedron');
+            const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.3);
+            const dist = 0.8 + Math.random() * 0.5;
+            const endX = Math.cos(angle) * dist;
+            const endY = 0.3 + Math.random() * 0.8;
+            const endZ = Math.sin(angle) * dist;
+            const color = colors[i % colors.length];
+
+            star.setAttribute('radius', '0.07');
+            star.setAttribute('color', color);
+            star.setAttribute('material', 'shader: flat; opacity: 1; transparent: true;');
+            star.setAttribute('position', '0 0 0');
+
+            star.setAttribute('animation__move', {
+                property: 'position',
+                from: '0 0 0',
+                to: `${endX} ${endY} ${endZ}`,
+                dur: 500,
+                easing: 'easeOutQuad'
+            });
+            star.setAttribute('animation__fade', {
+                property: 'material.opacity',
+                from: 1,
+                to: 0,
+                dur: 500,
+                easing: 'easeInQuad'
+            });
+            star.setAttribute('animation__spin', {
+                property: 'rotation',
+                from: '0 0 0',
+                to: '360 360 0',
+                dur: 500
+            });
+
+            sparkleContainer.appendChild(star);
+            setTimeout(() => {
+                if (star.parentNode) star.parentNode.removeChild(star);
+            }, 520);
+        }
+    }
+
+    // タップ時のリアクション（ジャンプ ＋ ランダムで360度クルッと回転 ＋ キラキラ ＋ 効果音）
+    function reactCharacter() {
+        if (isReacting) return;
+        isReacting = true;
+
+        playTapSound();
+        spawnSparkles();
+
         charEntity.removeAttribute('animation__float');
         charEntity.setAttribute('animation__jump', {
             property: 'position',
             from: '0 0.2 0',
             to: '0 0.9 0',
-            dur: 180,
+            dur: 190,
             dir: 'alternate',
             loop: 1,
             easing: 'easeOutQuad'
         });
 
+        // 50%の確率でジャンプ中にクルッと1回転する
+        const doSpin = Math.random() < 0.5;
+        if (doSpin) {
+            charEntity.setAttribute('animation__spin', {
+                property: 'rotation',
+                from: '0 0 0',
+                to: '0 360 0',
+                dur: 380,
+                easing: 'easeInOutQuad'
+            });
+        }
+
         setTimeout(() => {
             charEntity.removeAttribute('animation__jump');
+            charEntity.removeAttribute('animation__spin');
             charEntity.setAttribute('position', '0 0.2 0');
-            // 待機アニメーション再開
+            charEntity.setAttribute('rotation', '0 0 0');
             charEntity.setAttribute('animation__float', {
                 property: 'position',
                 from: '0 0.2 0',
@@ -330,8 +504,85 @@
                 loop: true,
                 easing: 'easeInOutSine'
             });
-            isJumping = false;
-        }, 380);
+            isReacting = false;
+        }, 400);
+    }
+
+    // 記念撮影機能（カメラ背景 ＋ A-Frame 3D画面 ＋ 学科ロゴを合成）
+    function takeARPhoto() {
+        const video = document.getElementById('camera-bg');
+        const sceneEl = document.getElementById('ar-scene');
+        const flash = document.getElementById('flash-effect');
+
+        playShutterSound();
+
+        // フラッシュ演出
+        flash.style.opacity = '0.85';
+        setTimeout(() => { flash.style.opacity = '0'; }, 150);
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        // 1. カメラ映像を画面比率（object-fit: cover相当）で描画
+        if (video.videoWidth && video.videoHeight) {
+            const vRatio = video.videoWidth / video.videoHeight;
+            const cRatio = width / height;
+            let drawW, drawH, offsetX, offsetY;
+
+            if (cRatio > vRatio) {
+                drawW = width;
+                drawH = width / vRatio;
+                offsetX = 0;
+                offsetY = (height - drawH) / 2;
+            } else {
+                drawH = height;
+                drawW = height * vRatio;
+                offsetX = (width - drawW) / 2;
+                offsetY = 0;
+            }
+            ctx.drawImage(video, offsetX, offsetY, drawW, drawH);
+        } else {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        // 2. A-Frameの3Dキャンバスを上に重ねて描画
+        const glCanvas = sceneEl.canvas;
+        if (glCanvas) {
+            ctx.drawImage(glCanvas, 0, 0, width, height);
+        }
+
+        // 3. 右下に記念スタンプ風テキストを入れる
+        const badgeText = `学校説明会 WebAR - ${charData[currentKey].title}`;
+        ctx.font = 'bold 14px sans-serif';
+        const textWidth = ctx.measureText(badgeText).width;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.beginPath();
+        ctx.roundRect(width - textWidth - 36, height - 46, textWidth + 24, 32, 16);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(badgeText, width - textWidth - 24, height - 25);
+
+        // 4. 画像化してプレビューモーダルを表示
+        const dataUrl = canvas.toDataURL('image/png');
+        document.getElementById('photo-preview-img').src = dataUrl;
+        const dlLink = document.getElementById('photo-download-link');
+        dlLink.href = dataUrl;
+        dlLink.download = `school_ar_${currentKey}.png`;
+
+        document.getElementById('photo-modal').style.display = 'flex';
+    }
+
+    function closePhotoModal() {
+        document.getElementById('photo-modal').style.display = 'none';
     }
 
     // タップ・スワイプ・ピンチ操作
@@ -341,7 +592,7 @@
     let initialScale = currentScale;
 
     document.addEventListener('touchstart', (e) => {
-        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay') || e.target.closest('#photo-modal')) return;
 
         if (e.touches.length === 1) {
             touchStartX = e.touches[0].clientX;
@@ -355,7 +606,7 @@
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
-        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay') || e.target.closest('#photo-modal')) return;
 
         if (e.touches.length === 1) {
             const dx = e.touches[0].clientX - touchStartX;
@@ -374,9 +625,9 @@
     }, { passive: true });
 
     document.addEventListener('touchend', (e) => {
-        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay') || e.target.closest('#photo-modal')) return;
         if (!isDragging && e.changedTouches.length === 1 && !initialPinchDist) {
-            jumpCharacter();
+            reactCharacter();
             const lines = charData[currentKey].lines;
             showSpeech(lines[Math.floor(Math.random() * lines.length)]);
         }
@@ -386,8 +637,8 @@
     // PC確認用クリック
     document.addEventListener('click', (e) => {
         if ('ontouchstart' in window) return;
-        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay')) return;
-        jumpCharacter();
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('#start-overlay') || e.target.closest('#photo-modal')) return;
+        reactCharacter();
         const lines = charData[currentKey].lines;
         showSpeech(lines[Math.floor(Math.random() * lines.length)]);
     });

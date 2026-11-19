@@ -13,6 +13,7 @@
             margin: 0; padding: 0;
             width: 100vw; height: 100vh; height: 100dvh;
             overflow: hidden;
+            touch-action: manipulation;     /* 2回タップズーム防止 */
             font-family: 'Helvetica Neue', Arial, sans-serif;
             background-color: #000000;
         }
@@ -553,7 +554,10 @@
             ctx.fillRect(0, 0, width, height);
         }
 
-        // 2. A-Frameの3Dキャンバスを上に重ねて描画
+        // 2. A-Frameの3D画面を強制レンダリングしてから上に重ねて描画
+        if (sceneEl.renderer && sceneEl.object3D && sceneEl.camera) {
+            sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
+        }
         const glCanvas = sceneEl.canvas;
         if (glCanvas) {
             ctx.drawImage(glCanvas, 0, 0, width, height);

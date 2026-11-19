@@ -576,11 +576,12 @@
         ctx.fillText(badgeText, width - textWidth - 24, height - 25);
 
         // 4. 画像化してプレビューモーダルを表示
-        const dataUrl = canvas.toDataURL('image/png');
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
         document.getElementById('photo-preview-img').src = dataUrl;
+
         const dlLink = document.getElementById('photo-download-link');
         dlLink.href = dataUrl;
-        dlLink.download = `school_ar_${currentKey}.png`;
+        dlLink.download = `school_ar_${nowFloor}.jpg`;
 
         document.getElementById('photo-modal').style.display = 'flex';
     }

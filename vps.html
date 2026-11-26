@@ -32,6 +32,16 @@
       color: white; border: none; border-radius: 10px;
       font-weight: bold; font-size: 14px; cursor: pointer;
     }
+    /* 追加：メニュー移動ボタンのスタイル */
+    #menu-btn {
+      margin-top: 8px; width: 100%; padding: 9px;
+      background: rgba(51, 65, 85, 0.9);
+      color: #e2e8f0; border: 1px solid #64748b; border-radius: 10px;
+      font-weight: bold; font-size: 13px; cursor: pointer;
+    }
+    #menu-btn:active {
+      background: #475569;
+    }
   </style>
 </head>
 <body>
@@ -45,6 +55,8 @@
     <div><span id="status-badge">スキャン待機中</span></div>
     <div id="coord-text">スキャンした壁にカメラを向けて下のボタンを押してください</div>
     <button id="scan-btn" onclick="localizeOnce()">📷 この場所をVPSで認識する</button>
+    <!-- 追加：menu.htmlへ移動するボタン -->
+    <button id="menu-btn" onclick="goToMenu()">🏠 メニューに戻る</button>
   </div>
 
   <!-- 3D / AR シーン -->
@@ -105,6 +117,14 @@
       }
     }
     startCamera();
+
+    // 追加：カメラを停止してmenu.htmlへ遷移する関数
+    function goToMenu() {
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+      }
+      window.location.href = 'menu.html';
+    }
 
     // Immersal Cloud VPS API へ画像を送信して現在地を取得
     async function localizeOnce() {

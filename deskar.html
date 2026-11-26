@@ -244,7 +244,7 @@
         <p style="color: #cbd5e1; font-size: 12px; margin: 10px 0 0;">※画像を長押ししても保存できます</p>
         <div class="modal-actions">
             <button class="modal-btn" style="background: #64748b; color: white;" onclick="closePhotoModal()">閉じる</button>
-            <a id="photo-download-link" class="modal-btn" style="background: #10b981; color: white;" download="ar_memory.jpg">💾 保存する</a>
+            <button id="photo-download-btn" class="modal-btn" style="background: #10b981; color: white;" onclick="downloadPhotoBlob()">💾 保存する</button>
         </div>
     </div>
 
@@ -294,6 +294,7 @@
     let bubbleTimer = null;
     let isReacting = false;
     let audioCtx = null;
+    let latestPhotoCanvas = null;
 
     // 効果音（ピコン♪ / シャッター音）をWeb Audio APIで生成
     function playTapSound() {
@@ -579,20 +580,35 @@
             ctx.fillStyle = '#ffffff';
             ctx.fillText(badgeText, width - textWidth - padX - margin, height - margin - 10 * scale);
 
-            // 5. 軽いJPEG画像に変換してプレビューモーダルを表示
+            // 5. プレビュー表示と保存用データの保持
+            latestPhotoCanvas = canvas;
             const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
-            const previewImg = document.getElementById('photo-preview-img');
-            const dlLink = document.getElementById('photo-download-link');
-            const modal = document.getElementById('photo-modal');
-
-            previewImg.src = dataUrl;
-            dlLink.href = dataUrl;
-            dlLink.download = `school_ar_${currentKey}.jpg`;
-            modal.style.display = 'flex';
+            document.getElementById('photo-preview-img').src = dataUrl;
+            document.getElementById('photo-modal').style.display = 'flex';
 
         } catch (err) {
             alert('撮影エラー: ' + err.message);
         }
+    }
+
+    // Blob形式に変換して確実にダウンロードさせる関数
+    function downloadPhotoBlob() {
+        if (!latestPhotoCanvas) return;
+
+        latestPhotoCanvas.toBlob((blob) => {
+            if (!blob) {
+                alert('画像の作成に失敗しました。上の画像を長押しして保存してください。');
+                return;
+            }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `school_ar_${currentKey}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, 'image/jpeg', 0.88);
     }
 
     function closePhotoModal() {

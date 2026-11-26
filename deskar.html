@@ -513,57 +513,62 @@
 
     // 記念撮影機能（カメラ背景 ＋ A-Frame 3D画面 ＋ 学科ロゴを合成）
     function takeARPhoto() {
-        const video = document.getElementById('camera-bg');
-        const sceneEl = document.getElementById('ar-scene');
-        const flash = document.getElementById('flash-effect');
+        // 1. シャッターフラッシュ演出
+        const flash = document.getElementById('shutter-flash');
+        if (flash) {
+            flash.style.opacity = '0.8';
+            setTimeout(() => { flash.style.opacity = '0'; }, 150);
+        }
 
-        playShutterSound();
+        try {
+            const video = document.getElementById('camera-video');
+            const sceneEl = document.querySelector('a-scene');
 
-        // フラッシュ演出
-        flash.style.opacity = '0.85';
-        setTimeout(() => { flash.style.opacity = '0'; }, 150);
+            // 画面サイズを基準にする（videoWidthが0でも止まらないようにする）
+            const width = (video && video.videoWidth > 0) ? video.videoWidth : window.innerWidth;
+            const height = (video && video.videoHeight > 0) ? video.videoHeight : window.innerHeight;
 
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
-
-        // 1. カメラ映像を画面比率（object-fit: cover相当）で描画
-        if (video.videoWidth && video.videoHeight) {
-            const vRatio = video.videoWidth / video.videoHeight;
-            const cRatio = width / height;
-            let drawW, drawH, offsetX, offsetY;
-
-            if (cRatio > vRatio) {
-                drawW = width;
-                drawH = width / vRatio;
-                offsetX = 0;
-                offsetY = (height - drawH) / 2;
-            } else {
-                drawH = height;
-                drawW = height * vRatio;
-                offsetX = (width - drawW) / 2;
-                offsetY = 0;
+            // 2. カメラ映像を描画
+            if (video && video.readyState >= 2) {
+                ctx.drawImage(video, 0, 0, width, height);
             }
-            ctx.drawImage(video, offsetX, offsetY, drawW, drawH);
-        } else {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, width, height);
-        }
 
-        // 2. A-Frameの3D画面を強制レンダリングしてから上に重ねて描画
-        if (sceneEl.renderer && sceneEl.object3D && sceneEl.camera) {
-            sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
+            // 3. A-Frameの3D画面を強制レンダリングして重ねる
+            if (sceneEl) {
+                if (sceneEl.renderer && sceneEl.object3D && sceneEl.camera) {
+                    sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
+                }
+                if (sceneEl.canvas) {
+                    ctx.drawImage(sceneEl.canvas, 0, 0, width, height);
+                }
+            }
+
+            // 4. 軽いJPEG画像に変換してプレビュー画面を表示
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+            const previewImg = document.getElementById('photo-preview-img');
+            const dlLink = document.getElementById('photo-download-link');
+            const modal = document.getElementById('photo-modal');
+
+            if (!previewImg || !dlLink || !modal) {
+                alert('エラー：HTML側に photo-modal のタグが見つかりません');
+                return;
+            }
+
+            previewImg.src = dataUrl;
+            dlLink.href = dataUrl;
+            dlLink.download = 'school_ar_photo.jpg';
+            modal.style.display = 'flex';
+
+        } catch (err) {
+            // どこで止まったか画面にエラー内容を表示する
+            alert('撮影エラー: ' + err.message);
         }
-        const glCanvas = sceneEl.canvas;
-        if (glCanvas) {
-            ctx.drawImage(glCanvas, 0, 0, width, height);
-        }
+    }
 
         // 3. 右下に記念スタンプ風テキストを入れる
         const badgeText = `学校説明会 WebAR - ${charData[currentKey].title}`;
@@ -586,7 +591,7 @@
         dlLink.download = `school_ar_${nowFloor}.jpg`;
 
         document.getElementById('photo-modal').style.display = 'flex';
-    }
+    
 
     function closePhotoModal() {
         document.getElementById('photo-modal').style.display = 'none';

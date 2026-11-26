@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>越総 ARナビ - AR コシソウGO</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
@@ -14,447 +14,410 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
         }
 
-        html, body {
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            background: #cbd5e1;
+        body {
+            background: linear-gradient(135deg, #d8b4fe 0%, #c7d2fe 45%, #7dd3fc 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            perspective: 1000px;
         }
 
-        /* 背面カメラ映像 */
-        #bg-camera {
+        /* 浮遊背景パーツ（5学科モチーフ） */
+        .bg-decorations {
             position: fixed;
             inset: 0;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            object-fit: cover;
-            z-index: 1;
-        }
-
-        /* A-Frame 3D空間（タップ判定を有効化） */
-        a-scene {
-            position: fixed !important;
-            inset: 0;
-            width: 100vw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            z-index: 2;
-        }
-
-        /* 画面下の小さな操作ヒント */
-        .bottom-hint {
-            position: fixed;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 20;
-            background: rgba(255, 255, 255, 0.82);
-            backdrop-filter: blur(10px);
-            color: #334155;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 6px 14px;
-            border-radius: 999px;
             pointer-events: none;
-            white-space: nowrap;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            z-index: 0;
         }
 
-        /* 「使い方」タップ時に開くモーダル */
-        .usage-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            background: rgba(15, 23, 42, 0.45);
-            backdrop-filter: blur(6px);
+        .decor-item {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.42);
+            animation: float 6s ease-in-out infinite alternate;
+        }
+
+        .item-kougyou1    { top: 4%; left: 6%; animation-delay: 0s; font-size: 46px; }
+        .item-kougyou2    { bottom: 5%; right: 8%; animation-delay: 2s; font-size: 42px; }
+        .item-shougyou1   { top: 6%; right: 7%; animation-delay: 1s; font-size: 44px; }
+        .item-shougyou2   { bottom: 18%; left: 5%; animation-delay: 3s; font-size: 38px; }
+        .item-fukushoku1  { top: 45%; left: 3%; animation-delay: 1.5s; font-size: 42px; }
+        .item-fukushoku2  { bottom: 4%; right: 26%; animation-delay: 0.5s; font-size: 38px; }
+        .item-shokumotsu1 { top: 48%; right: 4%; animation-delay: 2.5s; font-size: 46px; }
+        .item-shokumotsu2 { top: 5%; left: 28%; animation-delay: 1.8s; font-size: 38px; }
+        .item-ar1         { bottom: 6%; left: 20%; animation-delay: 0.8s; font-size: 44px; }
+        .item-ar2         { top: 3%; right: 26%; animation-delay: 2.2s; font-size: 36px; }
+
+        @keyframes float {
+            0%   { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-16px) rotate(10deg); }
+        }
+
+        /* メインカード（配置そのまま・立体感強化） */
+        .app-card {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 28px;
+            padding: 28px 20px 26px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow:
+                0 22px 45px rgba(15, 23, 42, 0.16),
+                0 6px 0 rgba(226, 232, 240, 0.9),
+                inset 0 2px 0 rgba(255, 255, 255, 1);
+            text-align: center;
+            transform-style: preserve-3d;
+        }
+
+        /* ヘッダー */
+        .app-header {
+            margin-bottom: 22px;
+        }
+
+        .app-badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 5px 14px;
+            border-radius: 999px;
+            border: 1px solid #c7d2fe;
+            margin-bottom: 10px;
+            letter-spacing: 0.04em;
+            box-shadow: 0 2px 0 #c7d2fe;
+        }
+
+        .app-title {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #1e293b 25%, #2563eb 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            color: #475569;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        /* 3D立体ボタン共通（厚み＋上面ハイライト＋物理押し込み） */
+        .btn-3d {
+            position: relative;
+            border: none;
+            cursor: pointer;
+            user-select: none;
+            transform: translateY(0);
+            transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.08s ease;
+        }
+
+        /* メインARボタン共通（VPS・机上で体験） */
+        .btn-main-ar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 15px 18px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .btn-main-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-align: left;
+        }
+
+        .btn-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.22);
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.35), 0 2px 4px rgba(0, 0, 0, 0.12);
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            font-size: 20px;
+            flex-shrink: 0;
         }
 
-        .usage-card {
-            background: rgba(255, 255, 255, 0.96);
-            border-radius: 22px;
-            padding: 24px 20px;
-            width: 100%;
-            max-width: 380px;
-            color: #1e293b;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .usage-card h3 {
+        .btn-main-title {
+            display: block;
             font-size: 18px;
             font-weight: 900;
-            margin-bottom: 12px;
-            color: #0f172a;
+            line-height: 1.2;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
         }
 
-        .usage-card ol {
-            padding-left: 20px;
-            font-size: 13.5px;
-            line-height: 1.7;
-            color: #334155;
-            margin-bottom: 18px;
+        .btn-main-desc {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.92);
+            margin-top: 3px;
         }
 
-        .usage-card li {
-            margin-bottom: 6px;
+        /* 1. VPS（3D立体グリーン） */
+        .btn-vps {
+            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+            box-shadow:
+                0 6px 0 #047857,
+                0 12px 20px rgba(4, 120, 87, 0.32),
+                inset 0 2px 1px rgba(255, 255, 255, 0.45);
+        }
+        .btn-vps:active {
+            transform: translateY(5px);
+            box-shadow:
+                0 1px 0 #047857,
+                0 4px 8px rgba(4, 120, 87, 0.25),
+                inset 0 2px 1px rgba(255, 255, 255, 0.3);
         }
 
-        .close-usage-btn {
-            width: 100%;
-            padding: 13px;
-            border: none;
-            border-radius: 14px;
-            background: #0f172a;
+        /* 2. 机上で体験（3D立体オレンジ） */
+        .btn-desk {
+            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+            box-shadow:
+                0 6px 0 #b45309,
+                0 12px 20px rgba(180, 83, 9, 0.30),
+                inset 0 2px 1px rgba(255, 255, 255, 0.45);
+        }
+        .btn-desk:active {
+            transform: translateY(5px);
+            box-shadow:
+                0 1px 0 #b45309,
+                0 4px 8px rgba(180, 83, 9, 0.25),
+                inset 0 2px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        /* 3. クイズ & 4. アンケート */
+        .sub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .btn-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 15px 12px;
+            border-radius: 18px;
+            text-decoration: none;
             color: #ffffff;
             font-size: 15px;
             font-weight: 800;
-            cursor: pointer;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+        }
+
+        .btn-tile i {
+            font-size: 22px;
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.15));
+        }
+
+        /* クイズ（3D立体パープル） */
+        .btn-quiz {
+            background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+            box-shadow:
+                0 6px 0 #5b21b6,
+                0 10px 18px rgba(91, 33, 182, 0.28),
+                inset 0 2px 1px rgba(255, 255, 255, 0.45);
+        }
+        .btn-quiz:active {
+            transform: translateY(5px);
+            box-shadow:
+                0 1px 0 #5b21b6,
+                0 4px 8px rgba(91, 33, 182, 0.22),
+                inset 0 2px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        /* アンケート（3D立体レッド） */
+        .btn-survey {
+            background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+            box-shadow:
+                0 6px 0 #b91c1c,
+                0 10px 18px rgba(185, 28, 28, 0.28),
+                inset 0 2px 1px rgba(255, 255, 255, 0.45);
+        }
+        .btn-survey:active {
+            transform: translateY(5px);
+            box-shadow:
+                0 1px 0 #b91c1c,
+                0 4px 8px rgba(185, 28, 28, 0.22),
+                inset 0 2px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        /* 5. 使い方ボタン（3D立体ライトグレー） */
+        .btn-usage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 13px 16px;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #475569;
+            box-shadow:
+                0 5px 0 #cbd5e1,
+                0 8px 14px rgba(100, 116, 139, 0.16),
+                inset 0 2px 1px rgba(255, 255, 255, 0.9);
+        }
+        .btn-usage:active {
+            transform: translateY(4px);
+            box-shadow:
+                0 1px 0 #cbd5e1,
+                0 3px 6px rgba(100, 116, 139, 0.14);
+        }
+
+        /* 使い方アコーディオン */
+        .guide-box {
+            display: none;
+            margin-top: 16px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: left;
+            font-size: 13px;
+            color: #334155;
+            line-height: 1.65;
+            box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.04);
+        }
+
+        .guide-box h4 {
+            color: #0f172a;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .guide-box ol {
+            padding-left: 20px;
+        }
+
+        .guide-box li {
+            margin-bottom: 6px;
+        }
+
+        .guide-box li:last-child {
+            margin-bottom: 0;
         }
     </style>
 </head>
 <body>
 
-    <video id="bg-camera" autoplay playsinline muted></video>
+    <div class="bg-decorations">
+        <i class="fa-solid fa-gear decor-item item-kougyou1"></i>
+        <i class="fa-solid fa-screwdriver-wrench decor-item item-kougyou2"></i>
+        <i class="fa-solid fa-calculator decor-item item-shougyou1"></i>
+        <i class="fa-solid fa-chart-line decor-item item-shougyou2"></i>
+        <i class="fa-solid fa-scissors decor-item item-fukushoku1"></i>
+        <i class="fa-solid fa-shirt decor-item item-fukushoku2"></i>
+        <i class="fa-solid fa-utensils decor-item item-shokumotsu1"></i>
+        <i class="fa-solid fa-cake-candles decor-item item-shokumotsu2"></i>
+        <i class="fa-solid fa-vr-cardboard decor-item item-ar1"></i>
+        <i class="fa-solid fa-graduation-cap decor-item item-ar2"></i>
+    </div>
+    
+    <div class="app-card">
+        <div class="app-header">
+            <span class="app-badge">越谷総合技術高校</span>
+            <h1 class="app-title">AR コシソウGO</h1>
+            <p class="app-subtitle">校内をめぐってARを体験しよう！</p>
+        </div>
 
-    <!-- 3D空間 -->
-    <a-scene
-        id="menu-scene"
-        embedded
-        renderer="alpha: true; colorManagement: true; antialias: true;"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false">
+        <!-- 1. VPS -->
+        <a href="./vps.html" class="btn-3d btn-main-ar btn-vps">
+            <div class="btn-main-left">
+                <div class="btn-icon-box">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div>
+                    <span class="btn-main-title">VPS</span>
+                    <span class="btn-main-desc">校内のスポットにかざしてAR起動</span>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="opacity: 0.9;"></i>
+        </a>
 
-        <!-- タップ・クリック判定用レイキャスター付きカメラ -->
-        <a-camera position="0 0 3.4" look-controls="enabled: false">
-            <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable-3d"></a-entity>
-        </a-camera>
+        <!-- 2. 机上で体験 -->
+        <a href="./deskar.html" class="btn-3d btn-main-ar btn-desk">
+            <div class="btn-main-left">
+                <div class="btn-icon-box">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+                <div>
+                    <span class="btn-main-title">机上で体験</span>
+                    <span class="btn-main-desc">目の前に3Dキャラを呼び出して撮影</span>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="opacity: 0.9;"></i>
+        </a>
 
-        <!-- 立体感と側面の色が綺麗に出るライト -->
-        <a-entity light="type: ambient; color: #ffffff; intensity: 0.95;"></a-entity>
-        <a-entity light="type: directional; color: #ffffff; intensity: 1.1;" position="2.5 4 4"></a-entity>
-        <a-entity light="type: directional; color: #e0f2fe; intensity: 0.6;" position="-3 -2 2"></a-entity>
+        <!-- 3. クイズ & 4. アンケート -->
+        <div class="sub-grid">
+            <a href="./form.html" class="btn-3d btn-tile btn-quiz">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>クイズ</span>
+            </a>
 
-        <!-- 3Dタイトル＆ボタン全体をまとめるグループ（スワイプで傾けて立体感を確認できる） -->
-        <a-entity id="menu-rig" position="0 0.05 0" rotation="0 0 0">
+            <a href="https://forms.gle/NvS4azoim9Pduo2w6" class="btn-3d btn-tile btn-survey">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>アンケート</span>
+            </a>
+        </div>
 
-            <!-- 3Dタイトルプレート -->
-            <a-entity id="title-3d" position="0 1.38 0"></a-entity>
+        <!-- 5. 使い方 -->
+        <button type="button" class="btn-3d btn-usage" id="toggleGuide">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>使い方</span>
+            <i class="fa-solid fa-chevron-down" id="guideChevron" style="font-size: 12px; margin-left: 2px;"></i>
+        </button>
 
-            <!-- 1. VPS（一番上の主役3Dボタン） -->
-            <a-entity id="btn-3d-vps" position="0 0.72 0.08"></a-entity>
-
-            <!-- 2. 机上で体験（ワイド3Dボタン） -->
-            <a-entity id="btn-3d-desk" position="0 0.14 0.04"></a-entity>
-
-            <!-- 3. クイズ（左の3Dボタン） -->
-            <a-entity id="btn-3d-quiz" position="-0.56 -0.44 0.04"></a-entity>
-
-            <!-- 4. アンケート（右の3Dボタン） -->
-            <a-entity id="btn-3d-survey" position="0.56 -0.44 0.04"></a-entity>
-
-            <!-- 5. 使い方（一番下の3Dボタン） -->
-            <a-entity id="btn-3d-usage" position="0 -1.00 0"></a-entity>
-
-        </a-entity>
-    </a-scene>
-
-    <div class="bottom-hint">👆 3Dボタンをタップで選択・ドラッグで立体角度を変更</div>
-
-    <!-- 使い方モーダル -->
-    <div class="usage-modal" id="usageModal" onclick="closeUsage(event)">
-        <div class="usage-card" onclick="event.stopPropagation()">
-            <h3>アプリのあそびかた</h3>
+        <div class="guide-box" id="guideBox">
+            <h4><i class="fa-solid fa-circle-info" style="color: #3b82f6;"></i> アプリのあそびかた</h4>
             <ol>
                 <li><strong>「VPS」</strong>または<strong>「机上で体験」</strong>を押してカメラを許可します。</li>
                 <li>校内の対象スポットにカメラをかざしたり、机の上にキャラクターを呼び出して記念撮影ができます。</li>
                 <li>ARとは別に校内を使った<strong>クイズ</strong>があります。ぜひ全問正解を目指して頑張ってください。</li>
             </ol>
-            <button type="button" class="close-usage-btn" onclick="closeUsage()">閉じる</button>
         </div>
     </div>
 
-<script>
-    // 高解像度Canvasで日本語の3Dボタン表面テクスチャを生成
-    function createLabelTexture({ width = 1024, height = 256, bg = '#ffffff', text = '', subText = '', textColor = '#0f172a', accent = '' }) {
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
+    <script>
+        const toggleBtn = document.getElementById('toggleGuide');
+        const guideBox = document.getElementById('guideBox');
+        const guideChevron = document.getElementById('guideChevron');
 
-        // 背景塗りつぶし
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, width, height);
-
-        // 左端のアクセントバー（ある場合）
-        if (accent) {
-            ctx.fillStyle = accent;
-            ctx.fillRect(0, 0, 28, height);
-        }
-
-        // 外枠のハイライト線
-        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-        ctx.lineWidth = 10;
-        ctx.strokeRect(5, 5, width - 10, height - 10);
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        if (subText) {
-            ctx.fillStyle = textColor;
-            ctx.font = '900 84px -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", sans-serif';
-            ctx.fillText(text, width / 2, height * 0.40);
-
-            ctx.fillStyle = 'rgba(226, 232, 240, 0.9)';
-            ctx.font = '700 38px -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", sans-serif';
-            ctx.fillText(subText, width / 2, height * 0.74);
-        } else {
-            ctx.fillStyle = textColor;
-            ctx.font = '900 76px -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", sans-serif';
-            ctx.fillText(text, width / 2, height / 2 + 4);
-        }
-
-        const tex = new THREE.CanvasTexture(canvas);
-        tex.anisotropy = 8;
-        tex.needsUpdate = true;
-        return tex;
-    }
-
-    // 立体ブロックボタンを3D空間に構築する関数
-    function build3DButton({ containerId, w, h, d, bodyColor, frontBg, text, subText, textColor, accent, floatDelay = 0, onClick }) {
-        const container = document.getElementById(containerId);
-
-        // 浮遊アニメーション用の内側ラッパー
-        const floatGroup = document.createElement('a-entity');
-        floatGroup.setAttribute('animation__float', {
-            property: 'position',
-            from: '0 -0.018 0',
-            to: '0 0.018 0',
-            dir: 'alternate',
-            dur: 2200,
-            delay: floatDelay,
-            loop: true,
-            easing: 'easeInOutSine'
+        toggleBtn.addEventListener('click', () => {
+            const isOpen = guideBox.style.display === 'block';
+            guideBox.style.display = isOpen ? 'none' : 'block';
+            guideChevron.className = isOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
         });
-
-        // 押し込みアニメーション用ラッパー
-        const pressGroup = document.createElement('a-entity');
-
-        // 3D立体ボックス本体（側面・背面の厚み）
-        const box = document.createElement('a-box');
-        box.setAttribute('width', w);
-        box.setAttribute('height', h);
-        box.setAttribute('depth', d);
-        box.setAttribute('color', bodyColor);
-        box.setAttribute('material', 'roughness: 0.35; metalness: 0.1;');
-        box.classList.add('clickable-3d');
-
-        // 前面プレート（日本語テクスチャ貼り付け）
-        const frontPlane = document.createElement('a-plane');
-        frontPlane.setAttribute('width', w * 0.98);
-        frontPlane.setAttribute('height', h * 0.96);
-        frontPlane.setAttribute('position', `0 0 ${d / 2 + 0.004}`);
-        frontPlane.classList.add('clickable-3d');
-
-        const tex = createLabelTexture({
-            width: Math.round(w * 512),
-            height: Math.round(h * 512),
-            bg: frontBg,
-            text,
-            subText,
-            textColor,
-            accent
-        });
-
-        frontPlane.addEventListener('loaded', () => {
-            const mesh = frontPlane.getObject3D('mesh');
-            if (mesh) {
-                mesh.material = new THREE.MeshBasicMaterial({ map: tex });
-            }
-        });
-
-        // タップ時の物理押し込み演出＋アクション実行
-        let pressed = false;
-        const handlePress = () => {
-            if (pressed) return;
-            pressed = true;
-            playClickTone();
-
-            pressGroup.setAttribute('animation__push', {
-                property: 'position',
-                from: '0 0 0',
-                to: '0 0 -0.14',
-                dur: 120,
-                dir: 'alternate',
-                loop: 1,
-                easing: 'easeOutQuad'
-            });
-
-            setTimeout(() => {
-                pressed = false;
-                if (onClick) onClick();
-            }, 240);
-        };
-
-        box.addEventListener('click', handlePress);
-        frontPlane.addEventListener('click', handlePress);
-
-        pressGroup.appendChild(box);
-        pressGroup.appendChild(frontPlane);
-        floatGroup.appendChild(pressGroup);
-        container.appendChild(floatGroup);
-    }
-
-    // クリック時の軽い電子音
-    let audioCtx = null;
-    function playClickTone() {
-        try {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(660, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(980, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.09);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.09);
-        } catch (e) {}
-    }
-
-    function openUsage() {
-        document.getElementById('usageModal').style.display = 'flex';
-    }
-    function closeUsage() {
-        document.getElementById('usageModal').style.display = 'none';
-    }
-
-    // シーン初期化時に3Dタイトルと5つの3Dボタンを生成
-    document.querySelector('a-scene').addEventListener('loaded', () => {
-        // 3Dタイトルプレート
-        build3DButton({
-            containerId: 'title-3d',
-            w: 2.16, h: 0.44, d: 0.12,
-            bodyColor: '#cbd5e1',
-            frontBg: '#ffffff',
-            text: 'AR コシソウGO',
-            textColor: '#0f172a',
-            floatDelay: 0
-        });
-
-        // 1. VPS（奥行き厚めのダークネイビー立体ブロック）
-        build3DButton({
-            containerId: 'btn-3d-vps',
-            w: 2.16, h: 0.56, d: 0.24,
-            bodyColor: '#1e293b',
-            frontBg: '#0f172a',
-            text: '📍 VPS',
-            subText: '校内スポットにかざして体験',
-            textColor: '#ffffff',
-            accent: '#38bdf8',
-            floatDelay: 200,
-            onClick: () => { window.location.href = './vps.html'; }
-        });
-
-        // 2. 机上で体験
-        build3DButton({
-            containerId: 'btn-3d-desk',
-            w: 2.16, h: 0.46, d: 0.18,
-            bodyColor: '#94a3b8',
-            frontBg: '#f8fafc',
-            text: '📷 机上で体験',
-            textColor: '#0f172a',
-            accent: '#10b981',
-            floatDelay: 400,
-            onClick: () => { window.location.href = './videoMaya.html'; }
-        });
-
-        // 3. クイズ（左）
-        build3DButton({
-            containerId: 'btn-3d-quiz',
-            w: 1.03, h: 0.46, d: 0.18,
-            bodyColor: '#94a3b8',
-            frontBg: '#f8fafc',
-            text: '❓ クイズ',
-            textColor: '#0f172a',
-            accent: '#8b5cf6',
-            floatDelay: 600,
-            onClick: () => { window.location.href = './form.html'; }
-        });
-
-        // 4. アンケート（右）
-        build3DButton({
-            containerId: 'btn-3d-survey',
-            w: 1.03, h: 0.46, d: 0.18,
-            bodyColor: '#94a3b8',
-            frontBg: '#f8fafc',
-            text: '📝 アンケート',
-            textColor: '#0f172a',
-            accent: '#f43f5e',
-            floatDelay: 800,
-            onClick: () => { window.location.href = 'https://forms.gle/NvS4azoim9Pduo2w6'; }
-        });
-
-        // 5. 使い方
-        build3DButton({
-            containerId: 'btn-3d-usage',
-            w: 2.16, h: 0.40, d: 0.14,
-            bodyColor: '#94a3b8',
-            frontBg: '#f1f5f9',
-            text: 'ℹ️ 使い方',
-            textColor: '#334155',
-            floatDelay: 1000,
-            onClick: () => { openUsage(); }
-        });
-    });
-
-    // カメラ起動
-    window.addEventListener('DOMContentLoaded', async () => {
-        const video = document.getElementById('bg-camera');
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { ideal: 'environment' } },
-                audio: false
-            });
-            video.srcObject = stream;
-            await video.play();
-        } catch (e) {}
-    });
-
-    // ドラッグ・スワイプで3Dボタン群の角度を自由に傾けられる（厚みがしっかり見える）
-    const rig = document.getElementById('menu-rig');
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let rotX = 4, rotY = -8; // 最初から少し斜めにして立体（厚み）を見せる
-    rig.setAttribute('rotation', `${rotX} ${rotY} 0`);
-
-    const onStart = (x, y) => { isDragging = true; startX = x; startY = y; };
-    const onMove = (x, y) => {
-        if (!isDragging) return;
-        const dx = x - startX;
-        const dy = y - startY;
-        rotY = Math.max(-35, Math.min(35, rotY + dx * 0.25));
-        rotX = Math.max(-25, Math.min(25, rotX + dy * 0.25));
-        rig.setAttribute('rotation', `${rotX} ${rotY} 0`);
-        startX = x;
-        startY = y;
-    };
-    const onEnd = () => { isDragging = false; };
-
-    document.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    document.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    document.addEventListener('touchend', onEnd);
-
-    document.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
-    document.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
-    document.addEventListener('mouseup', onEnd);
-</script>
+    </script>
 </body>
 </html>

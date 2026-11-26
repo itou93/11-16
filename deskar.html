@@ -241,10 +241,10 @@
     <div id="photo-modal">
         <p style="color: #ffffff; font-weight: bold; font-size: 16px; margin: 0 0 12px;">✨ 記念写真が撮れました！</p>
         <img id="photo-preview-img" src="" alt="AR記念写真">
-        <p style="color: #cbd5e1; font-size: 12px; margin: 10px 0 0;">※画像を長押ししても保存できます</p>
+        <p style="color: #cbd5e1; font-size: 12px; margin: 10px 0 0;">「保存する」→「画像を保存」でカメラロールに入ります</p>
         <div class="modal-actions">
             <button class="modal-btn" style="background: #64748b; color: white;" onclick="closePhotoModal()">閉じる</button>
-            <button id="photo-download-btn" class="modal-btn" style="background: #10b981; color: white;" onclick="downloadPhotoBlob()">💾 保存する</button>
+            <button id="photo-download-btn" class="modal-btn" style="background: #10b981; color: white;" onclick="savePhotoSmoothly()">💾 保存する</button>
         </div>
     </div>
 
@@ -591,19 +591,35 @@
         }
     }
 
-    // Blob形式に変換して確実にダウンロードさせる関数
-    function downloadPhotoBlob() {
+    // 画面遷移せず、その場で「画像を保存」メニューを出す関数
+    function savePhotoSmoothly() {
         if (!latestPhotoCanvas) return;
 
-        latestPhotoCanvas.toBlob((blob) => {
-            if (!blob) {
-                alert('画像の作成に失敗しました。上の画像を長押しして保存してください。');
-                return;
+        latestPhotoCanvas.toBlob(async (blob) => {
+            if (!blob) return;
+
+            const fileName = `school_ar_${currentKey}.jpg`;
+            const file = new File([blob], fileName, { type: 'image/jpeg' });
+
+            // スマホの共有メニュー（「画像を保存」が一発で出る）に対応している場合
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: '学校説明会 WebAR 記念写真'
+                    });
+                    return;
+                } catch (err) {
+                    // ユーザーが共有メニューをキャンセルした場合は何もしない
+                    if (err.name === 'AbortError') return;
+                }
             }
+
+            // PCなど非対応ブラウザの場合は通常ダウンロード
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `school_ar_${currentKey}.jpg`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

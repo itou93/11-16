@@ -95,7 +95,7 @@
         /* 下部コントロール（正面リセット ＆ シャッターボタン） */
         .bottom-controls {
             position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
-            display: flex; align-items: center; gap: 16px; z-index: 100;
+            display: flex; align-items: center; gap: 16px; z-index: 300;
         }
         .reset-btn {
             background: rgba(15, 23, 42, 0.78); color: white;
@@ -110,8 +110,6 @@
             font-size: 26px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: transform 0.1s;
-            position: fixed;
-            z-index: 999;
         }
         .shutter-btn:active {
             transform: scale(0.9);
@@ -246,7 +244,7 @@
         <p style="color: #cbd5e1; font-size: 12px; margin: 10px 0 0;">※画像を長押ししても保存できます</p>
         <div class="modal-actions">
             <button class="modal-btn" style="background: #64748b; color: white;" onclick="closePhotoModal()">閉じる</button>
-            <a id="photo-download-link" class="modal-btn" style="background: #10b981; color: white;" download="ar_memory.png">💾 保存する</a>
+            <a id="photo-download-link" class="modal-btn" style="background: #10b981; color: white;" download="ar_memory.jpg">💾 保存する</a>
         </div>
     </div>
 
@@ -306,9 +304,8 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            // 2段階に上がる可愛い音（ピコン♪）
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-            osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.08); // A5
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.08);
 
             gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.28);
@@ -346,7 +343,6 @@
         const video = document.getElementById('camera-bg');
         const overlay = document.getElementById('start-overlay');
 
-        // 音声コンテキストの初期化（ユーザー操作のタイミングでアンロック）
         try {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {}
@@ -462,7 +458,7 @@
         }
     }
 
-    // タップ時のリアクション（ジャンプ ＋ ランダムで360度クルッと回転 ＋ キラキラ ＋ 効果音）
+    // タップ時のリアクション
     function reactCharacter() {
         if (isReacting) return;
         isReacting = true;
@@ -481,7 +477,6 @@
             easing: 'easeOutQuad'
         });
 
-        // 50%の確率でジャンプ中にクルッと1回転する
         const doSpin = Math.random() < 0.5;
         if (doSpin) {
             charEntity.setAttribute('animation__spin', {
@@ -513,29 +508,44 @@
 
     // 記念撮影機能（カメラ背景 ＋ A-Frame 3D画面 ＋ 学科ロゴを合成）
     function takeARPhoto() {
+        playShutterSound();
+
         // 1. シャッターフラッシュ演出
-        const flash = document.getElementById('shutter-flash');
+        const flash = document.getElementById('flash-effect');
         if (flash) {
-            flash.style.opacity = '0.8';
+            flash.style.opacity = '0.85';
             setTimeout(() => { flash.style.opacity = '0'; }, 150);
         }
 
         try {
-            const video = document.getElementById('camera-video');
-            const sceneEl = document.querySelector('a-scene');
+            const video = document.getElementById('camera-bg');
+            const sceneEl = document.getElementById('ar-scene');
 
-            // 画面サイズを基準にする（videoWidthが0でも止まらないようにする）
-            const width = (video && video.videoWidth > 0) ? video.videoWidth : window.innerWidth;
-            const height = (video && video.videoHeight > 0) ? video.videoHeight : window.innerHeight;
+            // 画面アスペクト比に合わせたキャンバスサイズを作成
+            const width = window.innerWidth * (window.devicePixelRatio || 1);
+            const height = window.innerHeight * (window.devicePixelRatio || 1);
 
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
 
-            // 2. カメラ映像を描画
-            if (video && video.readyState >= 2) {
-                ctx.drawImage(video, 0, 0, width, height);
+            // 2. カメラ映像を描画（object-fit: cover と同じ比率で中央切り抜き）
+            if (video && video.readyState >= 2 && video.videoWidth > 0) {
+                const vw = video.videoWidth;
+                const vh = video.videoHeight;
+                const videoRatio = vw / vh;
+                const screenRatio = width / height;
+
+                let sx = 0, sy = 0, sWidth = vw, sHeight = vh;
+                if (videoRatio > screenRatio) {
+                    sWidth = vh * screenRatio;
+                    sx = (vw - sWidth) / 2;
+                } else {
+                    sHeight = vw / screenRatio;
+                    sy = (vh - sHeight) / 2;
+                }
+                ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, width, height);
             }
 
             // 3. A-Frameの3D画面を強制レンダリングして重ねる
@@ -548,50 +558,42 @@
                 }
             }
 
-            // 4. 軽いJPEG画像に変換してプレビュー画面を表示
+            // 4. 右下に記念スタンプ風テキストを入れる
+            const scale = width / window.innerWidth;
+            const badgeText = `学校説明会 WebAR - ${charData[currentKey].title}`;
+            ctx.font = `bold ${Math.round(14 * scale)}px sans-serif`;
+            const textWidth = ctx.measureText(badgeText).width;
+            const padX = 12 * scale;
+            const boxH = 32 * scale;
+            const margin = 16 * scale;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(width - textWidth - padX * 2 - margin, height - boxH - margin, textWidth + padX * 2, boxH, 16 * scale);
+            } else {
+                ctx.rect(width - textWidth - padX * 2 - margin, height - boxH - margin, textWidth + padX * 2, boxH);
+            }
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(badgeText, width - textWidth - padX - margin, height - margin - 10 * scale);
+
+            // 5. 軽いJPEG画像に変換してプレビューモーダルを表示
             const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
             const previewImg = document.getElementById('photo-preview-img');
             const dlLink = document.getElementById('photo-download-link');
             const modal = document.getElementById('photo-modal');
 
-            if (!previewImg || !dlLink || !modal) {
-                alert('エラー：HTML側に photo-modal のタグが見つかりません');
-                return;
-            }
-
             previewImg.src = dataUrl;
             dlLink.href = dataUrl;
-            dlLink.download = 'school_ar_photo.jpg';
+            dlLink.download = `school_ar_${currentKey}.jpg`;
             modal.style.display = 'flex';
 
         } catch (err) {
-            // どこで止まったか画面にエラー内容を表示する
             alert('撮影エラー: ' + err.message);
         }
     }
-
-        // 3. 右下に記念スタンプ風テキストを入れる
-        const badgeText = `学校説明会 WebAR - ${charData[currentKey].title}`;
-        ctx.font = 'bold 14px sans-serif';
-        const textWidth = ctx.measureText(badgeText).width;
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-        ctx.beginPath();
-        ctx.roundRect(width - textWidth - 36, height - 46, textWidth + 24, 32, 16);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(badgeText, width - textWidth - 24, height - 25);
-
-        // 4. 画像化してプレビューモーダルを表示
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
-        document.getElementById('photo-preview-img').src = dataUrl;
-
-        const dlLink = document.getElementById('photo-download-link');
-        dlLink.href = dataUrl;
-        dlLink.download = `school_ar_${nowFloor}.jpg`;
-
-        document.getElementById('photo-modal').style.display = 'flex';
-    
 
     function closePhotoModal() {
         document.getElementById('photo-modal').style.display = 'none';

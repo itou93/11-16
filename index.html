@@ -1,195 +1,778 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="Shift_JIS">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>越総 ARナビ - スタート</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR コシソウGO - ようこそ！</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <style>
-        /* 全体のベーススタイル */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
         }
 
-        body {
-            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 24px 16px;
-            position: relative;
-            overflow-x: hidden;
-            overflow-y: auto;
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a8a 100%);
         }
 
-        /* 余白を埋める浮遊背景パーツ */
-        .bg-decorations {
+        /* 背面カメラ映像 */
+        #camera-bg {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .decor-item {
-            position: absolute;
-            color: rgba(255, 255, 255, 0.5);
-            animation: float 6s ease-in-out infinite alternate;
-        }
-
-        .item-kougyou1 { top: 8%; left: 8%; animation-delay: 0s; font-size: 52px; }
-        .item-kougyou2 { bottom: 12%; right: 10%; animation-delay: 2s; font-size: 46px; }
-        .item-shougyou1 { top: 12%; right: 8%; animation-delay: 1s; font-size: 48px; }
-        .item-shougyou2 { bottom: 25%; left: 6%; animation-delay: 3s; font-size: 42px; }
-        .item-fukushoku1 { top: 48%; left: 4%; animation-delay: 1.5s; font-size: 48px; }
-        .item-fukushoku2 { bottom: 8%; right: 28%; animation-delay: 0.5s; font-size: 40px; }
-        .item-shokumotsu1 { top: 52%; right: 5%; animation-delay: 2.5s; font-size: 52px; }
-        .item-shokumotsu2 { top: 10%; left: 28%; animation-delay: 1.8s; font-size: 42px; }
-        .item-ar1 { bottom: 10%; left: 22%; animation-delay: 0.8s; font-size: 48px; }
-        .item-ar2 { top: 6%; right: 26%; animation-delay: 2.2s; font-size: 40px; }
-
-        @keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            100% { transform: translateY(-22px) rotate(12deg); }
-        }
-
-        /* メインのカード型容器 */
-        .app-card {
-            position: relative;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh; height: 100dvh;
+            object-fit: cover;
             z-index: 1;
-            background: rgba(255, 255, 255, 0.93);
-            backdrop-filter: blur(10px);
-            border-radius: 28px;
-            padding: 36px 24px;
-            width: 100%;
-            max-width: 520px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-            text-align: center;
-            margin: auto 0;
         }
 
-        .app-badge {
-            display: inline-block;
-            background: #eef2ff;
-            color: #4f46e5;
-            font-size: 13px;
-            font-weight: bold;
-            padding: 6px 16px;
-            border-radius: 20px;
-            margin-bottom: 16px;
+        /* 出現・突撃時のフラッシュ演出 */
+        #summon-flash {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh; height: 100dvh;
+            background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(186,230,253,0.9) 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 250;
+            transition: opacity 0.35s ease-out;
         }
 
-        /* タイトルロゴ画像のスタイル */
-        .logo-container {
-            width: 100%;
-            margin-bottom: 24px;
-        }
-
-        .title-logo {
-            width: 100%;
-            height: auto;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-            display: block;
-        }
-
-        /* スタートボタン */
-        .btn-start {
+        /* カメラ許可ボタン */
+        #tap-to-start {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh; height: 100dvh;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 300;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            width: 100%;
-            padding: 18px 24px;
-            font-size: 20px;
-            font-weight: 800;
-            color: white;
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: none;
-            border-radius: 20px;
-            text-decoration: none;
+            color: #ffffff;
+            text-align: center;
+            padding: 24px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-            margin-bottom: 24px;
         }
 
-        .btn-start:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.5);
+        .pulse-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 18px 36px;
+            font-size: 18px;
+            font-weight: 800;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 1.8s infinite;
+            margin-top: 20px;
         }
 
-        .btn-start:active {
-            transform: scale(0.98);
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70%  { box-shadow: 0 0 0 18px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        /* スタートボタンの下に配置する説明文エリア */
-        .description-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            padding: 18px 20px;
-            text-align: left;
+        /* A-Frame 3D空間 */
+        a-scene {
+            position: fixed !important;
+            top: 0; left: 0;
+            width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+            z-index: 2;
+        }
+
+        /* 3D操作ヒントバッジ */
+        .rotate-hint {
+            position: fixed;
+            top: 22px;
+            left: 20px;
+            z-index: 150;
+            background: rgba(15, 23, 42, 0.65);
+            color: #f8fafc;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+
+        /* 右上のスキップボタン */
+        .skip-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            background: rgba(15, 23, 42, 0.72);
+            color: #ffffff;
+            border: 1.5px solid rgba(255, 255, 255, 0.85);
+            padding: 10px 18px;
+            border-radius: 24px;
             font-size: 14px;
-            color: #334155;
-            line-height: 1.7;
+            font-weight: 800;
+            text-decoration: none;
+            backdrop-filter: blur(4px);
         }
 
-        .description-box h3 {
+        /* 吹き出しエリア */
+        .dialogue-wrapper {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 440px;
+            z-index: 150;
+            cursor: pointer;
+            transition: opacity 0.25s ease;
+        }
+
+        .speech-bubble {
+            position: relative;
+            background: rgba(255, 255, 255, 0.96);
+            border: 3.5px solid #3b82f6;
+            border-radius: 24px;
+            padding: 22px 20px 18px;
+            box-shadow: 0 14px 35px rgba(0, 0, 0, 0.3);
+            color: #1e293b;
+        }
+
+        .speech-bubble::before {
+            content: "";
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 14px 18px 14px;
+            border-style: solid;
+            border-color: transparent transparent #3b82f6 transparent;
+        }
+        .speech-bubble::after {
+            content: "";
+            position: absolute;
+            top: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 11px 14px 11px;
+            border-style: solid;
+            border-color: transparent transparent #ffffff transparent;
+        }
+
+        .speaker-badge {
+            position: absolute;
+            top: -15px;
+            left: 18px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 4px 14px;
+            border-radius: 14px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+        }
+
+        .dialogue-text {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.65;
+            min-height: 54px;
             color: #0f172a;
-            font-size: 15px;
-            margin-bottom: 8px;
+        }
+
+        .dialogue-footer {
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 5px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+
+        .next-arrow {
+            color: #2563eb;
+            animation: bounceArrow 0.8s infinite alternate;
+        }
+
+        @keyframes bounceArrow {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(3px); }
         }
     </style>
 </head>
 <body>
 
-    <!-- 背景の浮遊アイコン -->
-    <div class="bg-decorations">
-        <i class="fa-solid fa-gear decor-item item-kougyou1"></i>
-        <i class="fa-solid fa-screwdriver-wrench decor-item item-kougyou2"></i>
-        <i class="fa-solid fa-calculator decor-item item-shougyou1"></i>
-        <i class="fa-solid fa-chart-line decor-item item-shougyou2"></i>
-        <i class="fa-solid fa-scissors decor-item item-fukushoku1"></i>
-        <i class="fa-solid fa-shirt decor-item item-fukushoku2"></i>
-        <i class="fa-solid fa-utensils decor-item item-shokumotsu1"></i>
-        <i class="fa-solid fa-cake-candles decor-item item-shokumotsu2"></i>
-        <i class="fa-solid fa-vr-cardboard decor-item item-ar1"></i>
-        <i class="fa-solid fa-graduation-cap decor-item item-ar2"></i>
-    </div>
-    
-    <!-- メインカード -->
-    <div class="app-card">
-        <span class="app-badge">越谷総合技術高校</span>
+    <video id="camera-bg" autoplay playsinline muted></video>
+    <div id="summon-flash"></div>
 
-        <!-- 2枚目のタイトルロゴ -->
-        <div class="logo-container">
-            <img src="./画像/タイトルロゴ大.png" alt="AR コシソウGO" class="title-logo">
-        </div>
-
-        <!-- スタートボタン -->
-        <a href="./menu.html" class="btn-start">
-            <i class="fa-solid fa-play"></i>
-            スタート
-        </a>
-
-        <!-- 説明文を書き込むエリア -->
-        <div class="description-box">
-            <h3><i class="fa-solid fa-circle-info" style="color: #3b82f6;"></i> このアプリについて</h3>
-            <p>
-                ARを使った新しい校内案内アプリです！（仮　AR体験の説明を１行くらいで）<br>
-            </p>
-        </div>
+    <div id="tap-to-start" onclick="startIntroExperience()">
+        <div style="font-size: 52px; margin-bottom: 12px;">✨📱✨</div>
+        <h2 style="font-size: 22px; margin-bottom: 8px;">越谷総合技術高校 WebAR</h2>
+        <p style="font-size: 14px; color: #cbd5e1; line-height: 1.6;">
+            カメラをオンにして、<br>3D案内キャラクターを召喚しよう！
+        </p>
+        <button class="pulse-btn">▶ 画面をタップして召喚！</button>
     </div>
 
+    <div class="rotate-hint">🔄 ドラッグで360°回転 / 👆 タップでジャンプ</div>
+    <a href="./vps.html" class="skip-btn">スキップ ⏭</a>
+
+    <!-- 3D空間 -->
+    <a-scene
+        id="intro-scene"
+        embedded
+        renderer="alpha: true; colorManagement: true; antialias: true;"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false">
+
+        <a-camera position="0 1.4 4.2" look-controls="enabled: false"></a-camera>
+
+        <a-entity light="type: ambient; color: #ffffff; intensity: 1.15;"></a-entity>
+        <a-entity light="type: directional; color: #ffffff; intensity: 1.6;" position="2.5 4 3"></a-entity>
+        <a-entity light="type: directional; color: #38bdf8; intensity: 0.9;" position="-3 1.5 -2"></a-entity>
+
+        <!-- キャラクター全体グループ -->
+        <a-entity id="char-wrapper" position="0 1.15 -4" rotation="0 0 0" scale="0.01 0.01 0.01">
+            <a-entity
+                id="guide-char"
+                gltf-model="maya/syougyou3.glb"
+                position="0 0 0"
+                scale="0.55 0.55 0.55">
+            </a-entity>
+            <a-entity id="fx-container" position="0 0.3 0"></a-entity>
+        </a-entity>
+
+        <!-- 足元の光の魔法陣 -->
+        <a-ring
+            id="magic-ring-outer"
+            position="0 0.66 0"
+            rotation="-90 0 0"
+            radius-inner="0.72"
+            radius-outer="0.82"
+            material="color: #38bdf8; opacity: 0.85; transparent: true; shader: flat;"
+            animation="property: rotation; from: -90 0 0; to: -90 360 0; dur: 4000; loop: true; easing: linear">
+        </a-ring>
+        <a-ring
+            id="magic-ring-inner"
+            position="0 0.67 0"
+            rotation="-90 0 0"
+            radius-inner="0.45"
+            radius-outer="0.52"
+            material="color: #facc15; opacity: 0.8; transparent: true; shader: flat;"
+            animation="property: rotation; from: -90 360 0; to: -90 0 0; dur: 2800; loop: true; easing: linear">
+        </a-ring>
+    </a-scene>
+
+    <!-- 吹き出し -->
+    <div class="dialogue-wrapper" id="dialogue-wrapper" onclick="handleBubbleTap()">
+        <div class="speech-bubble">
+            <div class="speaker-badge">5F 情報処理・流通経済科 3Dガイド</div>
+            <div class="dialogue-text" id="dialogue-text"></div>
+            <div class="dialogue-footer">
+                <span id="page-indicator">1 / 4</span>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <span class="next-arrow" id="next-label">タップで次へ ▼</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const scripts = [
+        "ジャジャーン！！越谷総合技術高校へようこそ！\nぼくが「AR コシソウGO」の案内をするよ！",
+        "「AR（拡張現実）」っていうのは、今映っている現実のカメラに、こうして3Dのキャラが目の前に飛び出してくる技術なんだ！",
+        "ぼくのことも指でスワイプすると360度ぐるぐる回せるよ！裏側まで立体になっているのがわかるかな？",
+        "準備はいいかな？それじゃあ、さっそく体験画面へ出発しよう！"
+    ];
+
+    const charWrapper = document.getElementById('char-wrapper');
+    const charEl = document.getElementById('guide-char');
+    const fxContainer = document.getElementById('fx-container');
+    const dialogueWrapper = document.getElementById('dialogue-wrapper');
+    const textEl = document.getElementById('dialogue-text');
+    const pageEl = document.getElementById('page-indicator');
+    const progressEl = document.getElementById('progress-fill');
+    const nextLabelEl = document.getElementById('next-label');
+
+    let currentIndex = 0;
+    let charTimer = null;
+    let autoNextTimer = null;
+    let talkBounceTimer = null;
+    let isTyping = false;
+    let hasStarted = false;
+    let isTransitioning = false;
+    let audioCtx = null;
+    let rotY = 0;
+
+    async function openAnyCamera() {
+        const videoEl = document.getElementById('camera-bg');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: 'environment' } },
+                audio: false
+            });
+            videoEl.srcObject = stream;
+            await videoEl.play();
+            return true;
+        } catch (e1) {
+            try {
+                const fallbackStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+                videoEl.srcObject = fallbackStream;
+                await videoEl.play();
+                return true;
+            } catch (e2) {
+                return false;
+            }
+        }
+    }
+
+    function playSummonSound() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const now = audioCtx.currentTime;
+            const freqs = [523.25, 659.25, 783.99, 1046.50];
+            freqs.forEach((f, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(f, now + idx * 0.06);
+                gain.gain.setValueAtTime(0.14, now + idx * 0.06);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + idx * 0.06);
+                osc.stop(now + idx * 0.06 + 0.35);
+            });
+        } catch (e) {}
+    }
+
+    // カメラへ飛び込むときのヒューン！というワープ音
+    function playWarpRushSound() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(320, now);
+            osc.frequency.exponentialRampToValueAtTime(1400, now + 0.45);
+            gain.gain.setValueAtTime(0.16, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.48);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } catch (e) {}
+    }
+
+    function playVoiceBlip() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520 + Math.random() * 140, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.045);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.045);
+        } catch (e) {}
+    }
+
+    function burstStars(count = 14) {
+        const colors = ['#facc15', '#38bdf8', '#f472b6', '#4ade80', '#ffffff'];
+        for (let i = 0; i < count; i++) {
+            const star = document.createElement('a-octahedron');
+            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+            const dist = 1.0 + Math.random() * 0.9;
+            const endX = Math.cos(angle) * dist;
+            const endY = -0.2 + Math.random() * 1.3;
+            const endZ = Math.sin(angle) * dist;
+
+            star.setAttribute('radius', '0.09');
+            star.setAttribute('color', colors[i % colors.length]);
+            star.setAttribute('material', 'shader: flat; opacity: 1; transparent: true;');
+            star.setAttribute('position', '0 0 0');
+            star.setAttribute('animation__move', {
+                property: 'position',
+                from: '0 0 0',
+                to: `${endX} ${endY} ${endZ}`,
+                dur: 650,
+                easing: 'easeOutQuad'
+            });
+            star.setAttribute('animation__fade', {
+                property: 'material.opacity',
+                from: 1,
+                to: 0,
+                dur: 650
+            });
+            star.setAttribute('animation__spin', {
+                property: 'rotation',
+                from: '0 0 0',
+                to: '360 360 0',
+                dur: 650
+            });
+
+            fxContainer.appendChild(star);
+            setTimeout(() => { if (star.parentNode) star.parentNode.removeChild(star); }, 680);
+        }
+    }
+
+    function playSummonEntrance() {
+        playSummonSound();
+        const flash = document.getElementById('summon-flash');
+        flash.style.opacity = '0.9';
+        setTimeout(() => { flash.style.opacity = '0'; }, 120);
+
+        charWrapper.setAttribute('animation__zoom', {
+            property: 'scale',
+            from: '0.01 0.01 0.01',
+            to: '1 1 1',
+            dur: 650,
+            easing: 'easeOutBack'
+        });
+        charWrapper.setAttribute('animation__flyin', {
+            property: 'position',
+            from: '0 2.6 -5',
+            to: '0 1.15 0',
+            dur: 650,
+            easing: 'easeOutBack'
+        });
+        charEl.setAttribute('animation__entryspin', {
+            property: 'rotation',
+            from: '0 -720 0',
+            to: '0 0 0',
+            dur: 700,
+            easing: 'easeOutCubic'
+        });
+
+        setTimeout(() => {
+            burstStars(18);
+            charEl.removeAttribute('animation__entryspin');
+            charEl.setAttribute('animation__sway', {
+                property: 'rotation',
+                from: '0 -24 0',
+                to: '0 24 0',
+                dir: 'alternate',
+                dur: 2000,
+                loop: true,
+                easing: 'easeInOutSine'
+            });
+        }, 660);
+    }
+
+    function triggerLineAction(index) {
+        if (index === 1) {
+            burstStars(10);
+            charWrapper.setAttribute('animation__lean', {
+                property: 'position',
+                from: '0 1.15 0',
+                to: '0 1.22 1.35',
+                dur: 450,
+                dir: 'alternate',
+                loop: 1,
+                easing: 'easeOutBack'
+            });
+        } else if (index === 2) {
+            burstStars(10);
+            charEl.removeAttribute('animation__sway');
+            charEl.setAttribute('animation__turn360', {
+                property: 'rotation',
+                from: '0 0 0',
+                to: '0 360 0',
+                dur: 850,
+                easing: 'easeInOutBack'
+            });
+            setTimeout(() => {
+                charEl.removeAttribute('animation__turn360');
+                charEl.setAttribute('animation__sway', {
+                    property: 'rotation',
+                    from: '0 -24 0',
+                    to: '0 24 0',
+                    dir: 'alternate',
+                    dur: 2000,
+                    loop: true,
+                    easing: 'easeInOutSine'
+                });
+            }, 870);
+        } else if (index === 3) {
+            // 「出発しよう！」の瞬間に軽く身構えてワクワクジャンプ
+            burstStars(14);
+            charWrapper.setAttribute('animation__readyjump', {
+                property: 'position',
+                from: '0 1.15 0',
+                to: '0 1.45 0.3',
+                dur: 240,
+                dir: 'alternate',
+                loop: 1,
+                easing: 'easeOutQuad'
+            });
+        }
+    }
+
+    // カメラの裏側（Z=5.6）まで一気に突っ込んで画面遷移する演出
+    function launchThroughCameraToVps() {
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        clearInterval(charTimer);
+        clearTimeout(autoNextTimer);
+        clearInterval(talkBounceTimer);
+
+        playWarpRushSound();
+        burstStars(24);
+
+        // 吹き出しをフェードアウト
+        dialogueWrapper.style.opacity = '0';
+
+        // 正面向きに戻してカメラ（Z=4.2）の真後ろ（Z=5.6）へ猛ダッシュ！
+        charWrapper.setAttribute('rotation', '0 0 0');
+        charEl.removeAttribute('animation__sway');
+        charEl.setAttribute('rotation', '0 0 0');
+
+        charWrapper.setAttribute('animation__charge', {
+            property: 'position',
+            from: '0 1.15 0',
+            to: '0 1.35 5.6',
+            dur: 520,
+            easing: 'easeInQuad'
+        });
+
+        charWrapper.setAttribute('animation__charge_scale', {
+            property: 'scale',
+            from: '1 1 1',
+            to: '2.2 2.2 2.2',
+            dur: 520,
+            easing: 'easeInQuad'
+        });
+
+        // 視点を通過する瞬間にホワイトアウトフラッシュ
+        const flash = document.getElementById('summon-flash');
+        setTimeout(() => {
+            flash.style.transition = 'opacity 0.22s ease-in';
+            flash.style.opacity = '1';
+        }, 320);
+
+        // 完全に通り抜けた瞬間に vps.html へ移動
+        setTimeout(() => {
+            window.location.href = './vps.html';
+        }, 560);
+    }
+
+    function setTalkingAnimation(talking) {
+        clearInterval(talkBounceTimer);
+        if (talking) {
+            let up = false;
+            talkBounceTimer = setInterval(() => {
+                up = !up;
+                charEl.setAttribute('position', up ? '0 0.08 0' : '0 0 0');
+            }, 125);
+        } else {
+            charEl.setAttribute('position', '0 0 0');
+        }
+    }
+
+    function playLine(index) {
+        clearInterval(charTimer);
+        clearTimeout(autoNextTimer);
+
+        currentIndex = index;
+        if (index > 0) triggerLineAction(index);
+
+        const fullText = scripts[index];
+        pageEl.textContent = `${index + 1} / ${scripts.length}`;
+        nextLabelEl.textContent = (index === scripts.length - 1) ? '出発する！ ▶' : 'タップで次へ ▼';
+
+        progressEl.style.transition = 'none';
+        progressEl.style.width = '0%';
+
+        textEl.innerHTML = '';
+        isTyping = true;
+        setTalkingAnimation(true);
+
+        let i = 0;
+        charTimer = setInterval(() => {
+            if (i < fullText.length) {
+                const ch = fullText[i];
+                textEl.innerHTML += (ch === '\n') ? '<br>' : ch;
+                if (i % 2 === 0 && ch !== ' ' && ch !== '\n') {
+                    playVoiceBlip();
+                }
+                i++;
+            } else {
+                finishLineTyping();
+            }
+        }, 50);
+    }
+
+    function finishLineTyping() {
+        clearInterval(charTimer);
+        isTyping = false;
+        setTalkingAnimation(false);
+
+        textEl.innerHTML = scripts[currentIndex].replace(/\n/g, '<br>');
+
+        // 最後のセリフは余韻を短め（1.2秒）にしてすぐ突進演出へ！
+        const waitMs = (currentIndex === scripts.length - 1) ? 1200 : 2500;
+        requestAnimationFrame(() => {
+            progressEl.style.transition = `width ${waitMs}ms linear`;
+            progressEl.style.width = '100%';
+        });
+
+        autoNextTimer = setTimeout(() => {
+            goNextStep();
+        }, waitMs);
+    }
+
+    function goNextStep() {
+        if (currentIndex + 1 < scripts.length) {
+            playLine(currentIndex + 1);
+        } else {
+            launchThroughCameraToVps();
+        }
+    }
+
+    function handleBubbleTap() {
+        if (!hasStarted || isTransitioning) return;
+        if (isTyping) {
+            finishLineTyping();
+        } else {
+            clearTimeout(autoNextTimer);
+            goNextStep();
+        }
+    }
+
+    let isDragging = false;
+    let moved = false;
+    let prevX = 0;
+
+    document.addEventListener('touchstart', (e) => {
+        if (isTransitioning || e.target.closest('.dialogue-wrapper') || e.target.closest('.skip-btn') || e.target.closest('#tap-to-start')) return;
+        isDragging = true;
+        moved = false;
+        prevX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging || isTransitioning) return;
+        const dx = e.touches[0].clientX - prevX;
+        if (Math.abs(dx) > 4) moved = true;
+        rotY += dx * 0.85;
+        charWrapper.setAttribute('rotation', `0 ${rotY} 0`);
+        prevX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+        if (isTransitioning || e.target.closest('.dialogue-wrapper') || e.target.closest('.skip-btn') || e.target.closest('#tap-to-start')) return;
+        if (isDragging && !moved) {
+            burstStars(12);
+            charWrapper.setAttribute('animation__tapjump', {
+                property: 'position',
+                from: '0 1.15 0',
+                to: '0 1.75 0',
+                dur: 220,
+                dir: 'alternate',
+                loop: 1,
+                easing: 'easeOutQuad'
+            });
+        }
+        isDragging = false;
+    });
+
+    document.addEventListener('mousedown', (e) => {
+        if (isTransitioning || e.target.closest('.dialogue-wrapper') || e.target.closest('.skip-btn') || e.target.closest('#tap-to-start')) return;
+        isDragging = true;
+        moved = false;
+        prevX = e.clientX;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging || isTransitioning) return;
+        const dx = e.clientX - prevX;
+        if (Math.abs(dx) > 4) moved = true;
+        rotY += dx * 0.85;
+        charWrapper.setAttribute('rotation', `0 ${rotY} 0`);
+        prevX = e.clientX;
+    });
+
+    document.addEventListener('mouseup', (e) => {
+        if (isTransitioning || e.target.closest('.dialogue-wrapper') || e.target.closest('.skip-btn') || e.target.closest('#tap-to-start')) return;
+        if (isDragging && !moved) {
+            burstStars(12);
+            charWrapper.setAttribute('animation__tapjump', {
+                property: 'position',
+                from: '0 1.15 0',
+                to: '0 1.75 0',
+                dur: 220,
+                dir: 'alternate',
+                loop: 1,
+                easing: 'easeOutQuad'
+            });
+        }
+        isDragging = false;
+    });
+
+    async function startIntroExperience() {
+        if (hasStarted) return;
+        hasStarted = true;
+
+        document.getElementById('tap-to-start').style.display = 'none';
+
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
+
+        await openAnyCamera();
+        playSummonEntrance();
+        playLine(0);
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        const camOk = await openAnyCamera();
+        if (camOk) {
+            hasStarted = true;
+            document.getElementById('tap-to-start').style.display = 'none';
+            playSummonEntrance();
+            playLine(0);
+        }
+    });
+</script>
 </body>
 </html>
